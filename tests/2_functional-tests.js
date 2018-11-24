@@ -13,6 +13,8 @@ var server = require('../server');
 
 chai.use(chaiHttp);
 
+let likes = 0;
+
 suite('Functional Tests', function() {
     
     suite('GET /api/stock-prices => stockData object', function() {
@@ -22,27 +24,91 @@ suite('Functional Tests', function() {
         .get('/api/stock-prices')
         .query({stock: 'goog'})
         .end(function(err, res){
-          
-          //complete this one too
-          
+          assert.equal(res.status, 200);
+          assert.isObject(res.body);
+          assert.property(res.body.stockData, 'stock');
+          assert.equal(res.body.stockData.stock, 'GOOG');
+          assert.property(res.body.stockData, 'price');
+          assert.property(res.body.stockData, 'likes');
+          likes = res.body.stockData.likes;
           done();
         });
       });
       
       test('1 stock with like', function(done) {
-        
+        chai.request(server)
+          .get('/api/stock-prices')
+          .query({stock: 'goog', like: true})
+          .end((err, res)=>{
+            assert.equal(res.status, 200);
+            assert.isObject(res.body);
+            assert.property(res.body.stockData, 'stock');
+            assert.equal(res.body.stockData.stock, 'GOOG');
+            assert.property(res.body.stockData, 'price');
+            assert.property(res.body.stockData, 'likes');
+            assert.isAbove(res.body.stockData.likes, likes);
+            likes = res.body.stockData.likes;
+            done();
+          });
       });
       
       test('1 stock with like again (ensure likes arent double counted)', function(done) {
-        
+        chai.request(server)
+          .get('/api/stock-prices')
+          .query({stock: 'goog', like: true})
+          .end((err, res)=>{
+            assert.equal(res.status, 200);
+            assert.isObject(res.body);
+            assert.property(res.body.stockData, 'stock');
+            assert.equal(res.body.stockData.stock, 'GOOG');
+            assert.property(res.body.stockData, 'price');
+            assert.property(res.body.stockData, 'likes');
+            assert.equal(res.body.stockData.likes, likes);
+            done();
+          });
       });
       
+      let rel_likes;
+      
       test('2 stocks', function(done) {
-        
+        chai.request(server)
+          .get('/api/stock-prices')
+          .query({stock: ['goog', 'msft']})
+          .end((err, res)=>{
+            assert.equal(res.status, 200);
+            assert.isObject(res.body);
+            assert.property(res.body.stockData[0], 'stock');
+            assert.property(res.body.stockData[0], 'rel_likes');
+            assert.property(res.body.stockData[0], 'price');
+            assert.property(res.body.stockData[1], 'stock');
+            assert.property(res.body.stockData[1], 'rel_likes');
+            assert.property(res.body.stockData[1], 'price');
+            assert.oneOf(res.body.stockData[0].stock, ['GOOG','MSFT']);
+            assert.oneOf(res.body.stockData[1].stock, ['GOOG','MSFT']);
+            assert.equal(res.body.stockData[0].rel_likes + res.body.stockData[1].rel_likes, 0);
+            rel_likes = Math.abs(res.body.stockData[0].rel_likes);
+            done();
+          });
       });
       
       test('2 stocks with like', function(done) {
-        
+        chai.request(server)
+          .get('/api/stock-prices')
+          .query({stock: ['goog','msft'], like: true})
+          .end((err, res)=>{
+            assert.equal(res.status, 200);
+            assert.isObject(res.body);
+            assert.property(res.body.stockData[0], 'stock');
+            assert.property(res.body.stockData[0], 'rel_likes');
+            assert.property(res.body.stockData[0], 'price');
+            assert.property(res.body.stockData[1], 'stock');
+            assert.property(res.body.stockData[1], 'rel_likes');
+            assert.property(res.body.stockData[1], 'price');
+            assert.oneOf(res.body.stockData[0].stock, ['GOOG','MSFT']);
+            assert.oneOf(res.body.stockData[1].stock, ['GOOG','MSFT']);
+            assert.equal(res.body.stockData[0].rel_likes + res.body.stockData[1].rel_likes, 0);
+            assert.equal(Math.abs(res.body.stockData[0].rel_likes), rel_likes + 1);
+          });
       });
       
     });
