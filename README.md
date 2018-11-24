@@ -9,3 +9,6 @@ Project Stock Price Checker
 4) You will create all of the functional tests in `tests/2_functional-tests.js`
 
 
+Glitch Project links:
+Backend - https://glitch.com/edit/#!/oasis-study?path=tests/2_functional-tests.js:117:0
+Client Side - https://oasis-study.glitch.me/
